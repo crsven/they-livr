@@ -13,6 +13,7 @@ AlienHunter.initialize = function(alienCount) {
 
   // Create a three.js camera.
   this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.3, 10000);
+  this.camera.position.z = 3;
 
   // Apply VR headset positional data to camera.
   this.controls = new THREE.VRControls(this.camera);
@@ -24,17 +25,13 @@ AlienHunter.initialize = function(alienCount) {
   // Create a VR manager helper to enter and exit VR mode.
   this.manager = new WebVRManager(this.renderer, this.effect);
 
-  this.aliens = [];
+  this.alienMeshes = [];
   if(!alienCount) { alienCount = 5; }
   for(var i = 0;i<alienCount;i++) {
-    this.aliens.push(new Alien().build());
+    this.alienMeshes.push(new Alien().build());
   }
 
-  this.aliens.forEach(function(alien) {
-    alien.position.x = -(Math.random());
-    alien.position.y = -(Math.random());
-    alien.position.z = -(Math.random());
-
+  this.alienMeshes.forEach(function(alien) {
     this.scene.add(alien);
   }.bind(this));
 
@@ -48,30 +45,65 @@ AlienHunter.initialize = function(alienCount) {
     coords.x = 0;
     coords.y = 0;
     this.raycaster.setFromCamera(coords, this.camera);
-    var intersections = this.raycaster.intersectObjects(this.aliens);
+    var intersections = this.raycaster.intersectObjects(this.alienMeshes);
     if(intersections.length > 0){
       intersections.forEach(function(intersection) {
         // Modify intersected aliens 
         var mesh = intersection.object;
         var alien = mesh.alien;
-        mesh.rotation.y += 0.01;
-        mesh.rotation.x += 0.01;
-        mesh.position.z -= 0.01;
-        alien.takeHit();
-        if(alien.dead()) {
-          this.scene.remove(mesh);
+        if(alien.isAlien) {
+          mesh.position.z -= 0.01;
+          alien.takeHit();
+          if(alien.dead()) {
+            var index = this.alienMeshes.indexOf(mesh);
+            this.alienMeshes.splice(index, 1);
+            this.scene.remove(mesh);
+          }
         }
       }.bind(this));
-    } else {
     }
 
-    // Update VR headset position and apply to camera.
+    var aliensRemaining = this.alienMeshes.some(function(mesh) {
+      return mesh.alien.isAlien;
+    });
+
+    if(!aliensRemaining) {
+      this.endGame();
+    } else {
+      // Update VR headset position and apply to camera.
+      this.controls.update();
+
+      // Render the scene through the manager.
+      this.manager.render(this.scene, this.camera);
+
+      requestAnimationFrame(this.animate.bind(this));
+    }
+  };
+
+  this.endGame = function() {
+    // Create a three.js scene.
+    var endScene = new THREE.Scene();
+    if(!this.textMesh) {
+      var text = new THREE.TextGeometry('GAME OVER');
+      text.computeBoundingBox();
+      var material = new THREE.MeshNormalMaterial();
+      this.textMesh = new THREE.Mesh(text, material);
+      this.textMesh.position.x = -300;
+      this.textMesh.position.y = 0;
+      this.textMesh.position.z = -500;
+
+      this.textMesh.rotation.x = 0;
+      this.textMesh.rotation.y = Math.PI * 2;
+    }
+
+    var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+    endScene.add(ambientLight);
+    endScene.add(this.textMesh);
+
     this.controls.update();
+    this.manager.render(endScene, this.camera);
 
-    // Render the scene through the manager.
-    this.manager.render(this.scene, this.camera);
-
-    requestAnimationFrame(this.animate.bind(this));
+    requestAnimationFrame(this.endGame.bind(this));
   };
 
   this.animate();
