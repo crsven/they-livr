@@ -13,7 +13,6 @@ AlienHunter.initialize = function(alienCount) {
 
   // Create a three.js camera.
   this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.3, 10000);
-  this.camera.position.z = 3;
 
   // Apply VR headset positional data to camera.
   this.controls = new THREE.VRControls(this.camera);
@@ -25,6 +24,7 @@ AlienHunter.initialize = function(alienCount) {
   // Create a VR manager helper to enter and exit VR mode.
   this.manager = new WebVRManager(this.renderer, this.effect);
 
+  this.score = 0;
   this.alienMeshes = [];
   if(!alienCount) { alienCount = 5; }
   for(var i = 0;i<alienCount;i++) {
@@ -39,6 +39,7 @@ AlienHunter.initialize = function(alienCount) {
   this.scene.add(ambientLight);
 
   this.raycaster = new THREE.Raycaster();
+  this.raycaster.precision = 0.0005;
 
   this.animate = function() {
     var coords = new THREE.Vector2();
@@ -52,9 +53,9 @@ AlienHunter.initialize = function(alienCount) {
         var mesh = intersection.object;
         var alien = mesh.alien;
         if(alien.isAlien) {
-          mesh.position.z -= 0.01;
           alien.takeHit();
-          if(alien.dead()) {
+          if(alien.isDead()) {
+            this.score += 1;
             var index = this.alienMeshes.indexOf(mesh);
             this.alienMeshes.splice(index, 1);
             this.scene.remove(mesh);
@@ -70,6 +71,9 @@ AlienHunter.initialize = function(alienCount) {
     if(!aliensRemaining) {
       this.endGame();
     } else {
+      this.alienMeshes.forEach(function(mesh) {
+        mesh.alien.advance();
+      });
       // Update VR headset position and apply to camera.
       this.controls.update();
 
@@ -83,22 +87,29 @@ AlienHunter.initialize = function(alienCount) {
   this.endGame = function() {
     // Create a three.js scene.
     var endScene = new THREE.Scene();
-    if(!this.textMesh) {
-      var text = new THREE.TextGeometry('GAME OVER');
-      text.computeBoundingBox();
+    if(!this.endTextMesh) {
       var material = new THREE.MeshNormalMaterial();
-      this.textMesh = new THREE.Mesh(text, material);
-      this.textMesh.position.x = -300;
-      this.textMesh.position.y = 0;
-      this.textMesh.position.z = -500;
+      var endText = new THREE.TextGeometry('GAME OVER');
+      var scoreText = new THREE.TextGeometry('SCORE: ' + this.score);
+      this.endTextMesh = new THREE.Mesh(endText, material);
+      this.endTextMesh.position.x = -400;
+      this.endTextMesh.position.y = 100;
+      this.endTextMesh.position.z = -500;
+      this.endTextMesh.rotation.x = 0;
+      this.endTextMesh.rotation.y = Math.PI * 2;
 
-      this.textMesh.rotation.x = 0;
-      this.textMesh.rotation.y = Math.PI * 2;
+      this.scoreTextMesh = new THREE.Mesh(scoreText, material);
+      this.scoreTextMesh.position.x = -300;
+      this.scoreTextMesh.position.y = -100;
+      this.scoreTextMesh.position.z = -500;
+      this.scoreTextMesh.rotation.x = 0;
+      this.scoreTextMesh.rotation.y = Math.PI * 2;
     }
 
     var ambientLight = new THREE.AmbientLight(0xbbbbbb);
     endScene.add(ambientLight);
-    endScene.add(this.textMesh);
+    endScene.add(this.endTextMesh);
+    endScene.add(this.scoreTextMesh);
 
     this.controls.update();
     this.manager.render(endScene, this.camera);
