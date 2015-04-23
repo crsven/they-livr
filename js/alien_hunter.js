@@ -41,6 +41,52 @@ AlienHunter.initialize = function(alienCount) {
   this.raycaster = new THREE.Raycaster();
   this.raycaster.precision = 0.0005;
 
+  var floorGeometry = new THREE.PlaneBufferGeometry(5000, 5000, 1, 1);
+  var floorMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        side: THREE.DoubleSide
+  });
+  var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+  floorMesh.rotation.x = Math.PI / -2; // rotate to be flat in the X-Z plane
+  floorMesh.position.set(0, -100, 0);
+  this.scene.add(floorMesh);
+
+  var wallGeometry = new THREE.PlaneBufferGeometry(10000, 5000, 1, 1);
+  var wallMaterial = new THREE.MeshBasicMaterial({
+        color: 0x999999,
+        side: THREE.DoubleSide
+  });
+
+  var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
+  wallMesh.rotation.x = Math.PI / -1; // rotate to be flat in the X-Z plane
+  wallMesh.position.y = 2000;
+  wallMesh.position.z = -5000;
+  this.scene.add(wallMesh);
+
+  var wallMesh2 = new THREE.Mesh(wallGeometry, wallMaterial);
+  wallMesh2.rotation.x = Math.PI / -1; // rotate to be flat in the X-Z plane
+  wallMesh2.position.y = 2000;
+  wallMesh2.position.z = 5000;
+  this.scene.add(wallMesh2);
+
+  var sideWallMaterial = new THREE.MeshBasicMaterial({
+        color: 0x777777,
+        side: THREE.DoubleSide
+  });
+  var wallMesh3 = new THREE.Mesh(wallGeometry, sideWallMaterial);
+  wallMesh3.rotation.x = Math.PI / -1; // rotate to be flat in the X-Z plane
+  wallMesh3.rotation.y = Math.PI / -2; // rotate to be flat in the X-Z plane
+  wallMesh3.position.x = 5000;
+  wallMesh3.position.y = 2000;
+  this.scene.add(wallMesh3);
+
+  var wallMesh4 = new THREE.Mesh(wallGeometry, sideWallMaterial);
+  wallMesh4.rotation.x = Math.PI / -1; // rotate to be flat in the X-Z plane
+  wallMesh4.rotation.y = Math.PI / -2; // rotate to be flat in the X-Z plane
+  wallMesh4.position.x = -5000;
+  wallMesh4.position.y = 2000;
+  this.scene.add(wallMesh4);
+
   this.animate = function() {
     var coords = new THREE.Vector2();
     coords.x = 0;
