@@ -87,26 +87,42 @@ AlienHunter.initialize = function(alienCount) {
   wallMesh4.position.y = 2000;
   this.scene.add(wallMesh4);
 
+  var reticleGeometry = new THREE.SphereGeometry(0.02, 32, 32);
+  this.reticleGreenMaterial = new THREE.MeshBasicMaterial({color: 0x00fc00});
+  this.reticleRedMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+  this.reticleMesh = new THREE.Mesh(reticleGeometry, this.reticleGreenMaterial);
+  this.reticleMesh.position.set(1,500,1);
+  this.scene.add(this.reticleMesh);
+
   this.animate = function() {
     var coords = new THREE.Vector2();
     coords.x = 0;
     coords.y = 0;
     this.raycaster.setFromCamera(coords, this.camera);
+
     var intersections = this.raycaster.intersectObjects(this.alienMeshes);
     if(intersections.length > 0){
-      intersections.forEach(function(intersection) {
-        var mesh = intersection.object;
-        var alien = mesh.alien;
-        if(alien.isAlien) {
-          alien.takeHit();
-          if(alien.isDead()) {
-            this.score += 1;
-            var index = this.alienMeshes.indexOf(mesh);
-            this.alienMeshes.splice(index, 1);
-            this.scene.remove(mesh);
-          }
+      this.reticleMesh.position.copy(intersections[0].point);
+      this.reticleMesh.material = this.reticleGreenMaterial;
+      var mesh = intersections[0].object;
+      var alien = mesh.alien;
+      if(alien.isAlien) {
+        this.reticleMesh.material = this.reticleRedMaterial;
+        alien.takeHit();
+        if(alien.isDead()) {
+          this.score += 1;
+          var index = this.alienMeshes.indexOf(mesh);
+          this.alienMeshes.splice(index, 1);
+          this.scene.remove(mesh);
         }
-      }.bind(this));
+      }
+    } else {
+      this.camera.updateProjectionMatrix();
+      var zCamVec = new THREE.Vector3(0,0,-1);
+      var position = this.camera.localToWorld(zCamVec);
+      this.reticleMesh.position.set(position.x, position.y, position.z);
+      this.reticleMesh.lookAt(this.camera.position);
+      this.reticleMesh.material = this.reticleGreenMaterial;
     }
 
     var aliensRemaining = this.alienMeshes.some(function(mesh) {
