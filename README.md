@@ -7,4 +7,6 @@ Spin around and scan all the approaching people. Are any of them aliens???
 If you find an alien, stare at it until it runs away in fear.  
 Don't let any of the aliens touch you!
 
-Demo [here](http://crsven.github.io/they-livr/)
+Demo [here](http://crsven.github.io/they-livr/)  
+
+This would not exist without [WebVR Boilerplate](https://github.com/borismus/webvr-boilerplate)
